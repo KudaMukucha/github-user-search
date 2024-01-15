@@ -1,113 +1,182 @@
-import Image from 'next/image'
+'use client'
+
+import DarkAndLightButton from "@/components/DarkAndLightButton";
+import SearchAndButton from "@/components/SearchAndButton";
+import Image from "next/image";
+import Link from "next/link";
+import { IoLocationOutline } from "react-icons/io5";
+import { IoIosLink } from "react-icons/io";
+import { RiTwitterXFill } from "react-icons/ri";
+import { BsBuildingsFill } from "react-icons/bs";
+import { useQuery } from "@tanstack/react-query";
+// import dateFormat from 'date-format'
+import format from 'date-fns'
+import { FormEvent, useState } from "react";
+
+type GitHubUser = {
+  login: string;
+  id: number;
+  node_id: string;
+  avatar_url: string;
+  gravatar_id: string;
+  url: string;
+  html_url: string;
+  followers_url: string;
+  following_url: string;
+  gists_url: string;
+  starred_url: string;
+  subscriptions_url: string;
+  organizations_url: string;
+  repos_url: string;
+  events_url: string;
+  received_events_url: string;
+  type: string;
+  site_admin: boolean;
+  name: string;
+  company: string | null;
+  blog: string;
+  location: string;
+  email: string | null;
+  hireable: boolean | null;
+  bio: string;
+  twitter_username: string;
+  public_repos: number;
+  public_gists: number;
+  followers: number;
+  following: number;
+  created_at: string;
+  updated_at: string;
+  documentation_url:string;
+  message: string;
+};
 
 export default function Home() {
+  const [userName,setUserName] = useState('github')
+
+  const { isLoading, error, data,refetch} = useQuery<GitHubUser>({
+    queryKey:['repoData'],
+    queryFn:()=> fetch(`https://api.github.com/users/${userName}`).then((res)=> res.json())
+  })
+  console.log('data-',data);
+  if(isLoading) 
+   return(
+    <div className="flex h-screen w-full items-center justify-center">
+      <p className="animate-bounce">Loading...</p>
+    </div>
+   )
+
+
+  const handleSubmit=(e:React.FormEvent<HTMLFormElement>)=>{
+    e.preventDefault()
+    refetch()
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+   <div className="flex min-h-screen w-full  p-1.5 sm:p-4 pt-10 sm:pt-12 transition-all dark:bg-slate-900 bg-stone-100">
+      {/* container */}
+      <div className="mx-auto flex w-full max-w-[600px] flex-col gap-8 rounded p-2">
+        <section className="flex justify-between gap-3">
+          <p className="text-xl font-semibold">devfinder</p>
+         <DarkAndLightButton/>
+        </section>
+
+        {/*search and main */}
+        <section className="flex flex-col gap-6">
+          {/* search and button  */}
+          <SearchAndButton onChange={(e)=> setUserName(e.target.value)} onSubmit={handleSubmit} value={userName}/>
+
+          {data?.message ? 
+          <div className="flex w-full flex-col gap-5 rounded-lg bg-white dark:bg-slate-800 px-4 py-8 text-center text-red-400">
+              User Not found
+           </div> :
+          <main className="flex flex-col w-full rounded-lg gap-5 bg-white dark:bg-slate-800 px-4 py-8 min-h-[200px]">
+          
+            <section className="flex gap-4">
+              {/* User Image */}
+              <Image src={data?.avatar_url ?? ''} alt={'user image'} width={200} height={200} className={'h-20 w-20 rounded-full'}/>
+              <section className="flex  flex-col justify-between gap-1 transition-all sm:w-full sm:flex-row">
+                <div>
+                  {/*  name */}
+                  <h1>{data?.name}</h1>
+                  {/* user id */}
+                  <Link href={`https://github.com/${data?.login}/`} target={'_blank'} className={'text-blue-500 hover:underline text-sm transition-all'}>@{data?.login}</Link>
+                </div>
+                {/* joining date */}
+                  <p className="text-sm">
+                    <span>Joined at</span>
+                    {/* <span> {dateFormat(data?.created_at,'dd mmm yyyy')}</span> */}
+                    <span> {data?.created_at}</span>
+                  </p>
+              </section>
+            </section>
+
+            <section className="flex flex-col gap-5">
+                <p>
+                 {data?.bio ?? (
+                  <span className="opacity-60">This profile has no bio</span>
+                 )}
+                </p>
+                {/* repo and followers */}
+                <div className="flex justify-between gap-3 rounded-lg bg-stone-100 px-6 py-4 dark:bg-slate-900 min-h-[50px]">
+                    {/* item 1 */}
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-xs opacity-60">Repos</p>
+                      <p className="text-sm font-bold sm:text-base">{data?.public_repos}</p>
+                    </div>
+                      {/* item 2 */}
+                      <div className="flex flex-col items-center gap-2">
+                      <p className="text-xs opacity-60">Followers</p>
+                      <p className="text-sm font-bold sm:text-base">{data?.followers}</p>
+                    </div>
+                      {/* item 3 */}
+                      <div className="flex flex-col items-center gap-2">
+                      <p className="text-xs opacity-60">Following</p>
+                      <p className="text-sm font-bold sm:text-base">{data?.following}</p>
+                    </div>
+                </div>
+                {/* address and extra info */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* item 1 */}
+                  <div className="flex items-center gap-2">
+                      {/* icon */}
+                      <IoLocationOutline className="text-xl" />
+                      <p>{data?.location ?? (
+                        <span className="opacity-60">Not available</span>
+                      )}</p>
+                  </div>
+                  {/* item 2 */}
+                  <div className="flex items-center gap-2">
+                      {/* icon */}
+                      <IoIosLink className="text-xl" />
+                      {data?.blog ? (
+  <Link title={data?.blog} className="hover:underline opacity-60 max-w-[200px] overflow-hidden text-ellipsis" href={data?.blog}>
+    {data?.blog}
+  </Link>
+) : (
+  <span className="opacity-60">Not available</span>
+)}
+                  </div>
+                  {/* item 3 */}
+                  <div className="flex items-center gap-2">
+                      {/* icon */}
+                      <RiTwitterXFill className="text-xl" />
+                      <p>{data?.twitter_username ?? (
+                        <span className="opacity-60">Not available</span>
+                      )}</p>
+                  </div>
+                  {/* item 4 */}
+                  <div className="flex items-center gap-2">
+                      {/* icon */}
+                      <BsBuildingsFill className="text-xl" />
+                      <p>{data?.company ?? (
+                        <span className="opacity-60">Not available</span>
+                      )}</p>
+                  </div>
+                </div>
+            </section>
+          </main>}
+        </section>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+   </div>
   )
 }
